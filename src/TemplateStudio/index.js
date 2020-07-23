@@ -14,7 +14,7 @@
 
 /* Default values */
 
-const DEFAULT_TEMPLATE = `${ROOT_URI}/static/archives/helloworld@0.12.1.cta`;
+const DEFAULT_TEMPLATE = `${ROOT_URI}/static/archives/helloworld@0.13.0.cta`;
 const TEMPLATE_LIBRARY = 'https://templates.accordproject.org';
 
 /* Utilities */
@@ -419,7 +419,10 @@ class TemplateStudio extends Component {
             const logMessage = 'Grammar change successful!';
             let changes = {};
             if (data !== 'null') {
-                clause.getTemplate().getParserManager().buildGrammar(input);
+                const parserManager = clause.getTemplate().getParserManager();
+                parserManager.setTemplateMark(null);
+                parserManager.setTemplate(input);
+                clause.getTemplate().getParserManager().buildParser();
                 this.handleLogicGrammarChange(input);
                 try {
                     const changes = await Utils.draft(clause, data, { ...this.state.log, text: logMessage });
@@ -440,7 +443,10 @@ class TemplateStudio extends Component {
                 console.log(`Error building grammar ${error1.message}`);
                 const status = 'changed';
                 const template = clause.getTemplate();
-                template.getParserManager().buildGrammar(input);
+                const parserManager = clause.getTemplate().getParserManager();
+                parserManager.setTemplateMark(null);
+                parserManager.setTemplate(input);
+                clause.getTemplate().getParserManager().buildParser();
                 const log = { ...this.state.log, text: `[Change Template] ${error1.message}` };
                 // Disabled for now due to round-tripping issues
                 // const changesText = Utils.parseSample(clause, this.state.text, log);
@@ -482,7 +488,7 @@ class TemplateStudio extends Component {
         const template = clause.getTemplate();
         try {
             template.getLogicManager().getModelManager().validateModelFiles();
-            template.getParserManager().buildGrammar(grammar);
+            template.getParserManager().buildParser(grammar);
             this.setState(Utils.parseSample(clause, text, log));
             const changesLogic = Utils.compileLogic(editor, markers, logic, clause, log);
             this.setState(changesLogic);
@@ -513,7 +519,6 @@ class TemplateStudio extends Component {
     handleLogicGrammarChange(grammar) {
         const { clause, text, log, model, logic, markers } = this.state;
         const logicManager = clause.getTemplate().getLogicManager();
-        logicManager.getScriptManager().addTemplateFile(grammar, 'grammar/template.tem');
         const changesLogic = Utils.compileLogic(null, markers, logic, clause, this.state.log);
         this.setState(changesLogic);
     }
@@ -603,7 +608,7 @@ class TemplateStudio extends Component {
             newState.templateVersion = newState.clause.getTemplate().getMetadata().getVersion();
             newState.templateType = newState.clause.getTemplate().getMetadata().getTemplateType();
             newState.package = JSON.stringify(template.getMetadata().getPackageJson(), null, 2);
-            newState.grammar = template.getParserManager().getTemplatizedGrammar();
+            newState.grammar = template.getParserManager().getTemplate();
             newState.model = template.getModelManager().getModels();
             newState.logic = template.getScriptManager().getLogic();
             newState.text = template.getMetadata().getSamples().default;
@@ -646,7 +651,7 @@ class TemplateStudio extends Component {
             newState.templateVersion = newState.clause.getTemplate().getMetadata().getVersion();
             newState.templateType = newState.clause.getTemplate().getMetadata().getTemplateType();
             newState.package = JSON.stringify(template.getMetadata().getPackageJson(), null, 2);
-            newState.grammar = template.getParserManager().getTemplatizedGrammar();
+            newState.grammar = template.getParserManager().getTemplate();
             newState.model = template.getModelManager().getModels();
             newState.logic = template.getScriptManager().getLogic();
             newState.text = template.getMetadata().getSamples().default;
